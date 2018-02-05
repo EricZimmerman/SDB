@@ -7,9 +7,9 @@ using SDB.EntryTypes;
 
 namespace SDB
 {
-    public class Chunk
+    internal class Chunk
     {
-        public Chunk(SdbFile.TagValue typeId, byte[] bytes, int baseOffset)
+        internal Chunk(SdbFile.TagValue typeId, byte[] bytes, int baseOffset)
         {
             TypeId = typeId;
             Bytes = bytes;
@@ -21,8 +21,6 @@ namespace SDB
             var index = 0x0;
 
             Children = new List<ISdbEntry>();
-
-            //https://stackoverflow.com/questions/5320592/value-is-in-enum-list
 
             //bytes contains whatever the payload for this chunk is
             while (index < bytes.Length)
@@ -140,7 +138,7 @@ namespace SDB
 
                         var sti = new StringTableEntry(index, Encoding.Unicode.GetString(buff, 0, size).Trim('\0'));
 
-                        //These should be populated! Value is null tho in string table
+                        //TODO These should be populated! Value is null tho in string table
 //                        var st = new SdbEntryStringRef(id1, buff, baseOffset + index);
 //                        Children.Add(st);
 
@@ -168,7 +166,6 @@ namespace SDB
 
 
         public List<ISdbEntry> Children { get; }
-
 
         public SdbFile.TagValue TypeId { get; }
 

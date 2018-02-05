@@ -318,8 +318,6 @@ namespace SDB
 
             var index = 0xc;
 
-            //Chunks = new List<Chunk>();
-
             StringTableEntries.Clear();
             Metrics.Clear();
 
@@ -361,17 +359,6 @@ namespace SDB
                     Children.Add(l);
 
                     index += size;
-
-//                    var size = BitConverter.ToInt32(rawBytes, index);
-//                    index += 4;
-//                    var rawBuff = new byte[size];
-//
-//                    Buffer.BlockCopy(rawBytes, index, rawBuff, 0, size);
-//
-//                    var c = new Chunk(id, rawBuff, index - 2 - 4); //account for size and type
-//                    index += size;
-//                 
-//                    Chunks.Add(c);
                 }
                 else
                 {
@@ -383,7 +370,6 @@ namespace SDB
         //https://github.com/evil-e/sdb-explorer/blob/master/sdb.h
         //http://www.geoffchappell.com/studies/windows/win32/apphelp/sdb/tag.htm?tx=46
 
-        //   public List<Chunk> Chunks;
         public int MajorVersion { get; }
         public int MinorVersion { get; }
 

@@ -64,6 +64,15 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="Test Files\C--Windows-AppPatch-Custom-{6285a320-6cf0-b380-93f7-7504feaa793d}.sdb" />
+    <None Include="Test Files\drvmain.sdb" />
+    <None Include="Test Files\frxmain.sdb" />
+    <None Include="Test Files\msimain.sdb" />
+    <None Include="Test Files\pcamain.sdb" />
+    <None Include="Test Files\sysmain10.sdb" />
+    <None Include="Test Files\sysmainXP.sdb" />
+    <None Include="Test Files\{a80125c3-2fd3-9b70-6126-665732c0fa7c}.sdb" />
+    <None Include="Test Files\{e2899b82-b776-f85f-e800-4c3953792d3d}.sdb" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
