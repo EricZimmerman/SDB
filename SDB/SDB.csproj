@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Chunk.cs" />
     <Compile Include="EntryTypes\ISdbEntry.cs" />
+    <Compile Include="EntryTypes\SdbEntryStringTableItem.cs" />
     <Compile Include="Sdb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="EntryTypes\SdbEntryList.cs" />

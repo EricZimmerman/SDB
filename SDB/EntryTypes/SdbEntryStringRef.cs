@@ -28,8 +28,8 @@ namespace SDB.EntryTypes
 
         private object GetValue()
         {
-            var offset = BitConverter.ToInt32(Bytes, 0);
-            return SdbFile.StringTableEntries.SingleOrDefault(t => t.Offset == offset)?.Value;
+            var stringOffset = BitConverter.ToInt32(Bytes, 0);
+            return SdbFile.StringTableEntries.SingleOrDefault(t => t.Offset == stringOffset)?.Value;
         }
 
         public override string ToString()

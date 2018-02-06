@@ -41,8 +41,6 @@ namespace SDB
                 //handle some special cases
                 switch ((int) id1)
                 {
-                    case 0x02:
-                        continue;
                     case 0x53db:
                         index -= 1;
                         continue;
@@ -67,12 +65,12 @@ namespace SDB
                         break;
                     case SdbFile.TagType.TAG_TYPE_BYTE:
                         throw new Exception("Send this file to saericzimmerman@gmail.com so BYTE support can be added");
-                        buff = new byte[1];
-                        Buffer.BlockCopy(bytes, index, buff, 0, 1);
-                        var b = new SdbEntryByte(id1, buff, baseOffset + index);
-
-                        Children.Add(b);
-                        break;
+//                        buff = new byte[1];
+//                        Buffer.BlockCopy(bytes, index, buff, 0, 1);
+//                        var b = new SdbEntryByte(id1, buff, baseOffset + index);
+//
+//                        Children.Add(b);
+//                        break;
                     case SdbFile.TagType.TAG_TYPE_WORD:
                         buff = new byte[2];
                         Buffer.BlockCopy(bytes, index, buff, 0, 2);
@@ -136,13 +134,13 @@ namespace SDB
                         buff = new byte[size];
                         Buffer.BlockCopy(bytes, index, buff, 0, size);
 
+                        //this provides a means to do easy string lookups based on relative offset
                         var sti = new StringTableEntry(index, Encoding.Unicode.GetString(buff, 0, size).Trim('\0'));
-
-                        //TODO These should be populated! Value is null tho in string table
-//                        var st = new SdbEntryStringRef(id1, buff, baseOffset + index);
-//                        Children.Add(st);
-
                         SdbFile.StringTableEntries.Add(sti);
+
+                        //this is the structure itself that defines the strings found in the database
+                        var st = new SdbEntryStringTableItem(id1, buff, baseOffset + index - 4);
+                        Children.Add(st);
 
                         index += size;
                         break;
@@ -171,14 +169,14 @@ namespace SDB
 
         [IgnoreDataMember] public byte[] Bytes { get; }
 
-        private static void UpdateMetrics(SdbFile.TagValue id1)
+        private static void UpdateMetrics(SdbFile.TagValue tagId)
         {
-            if (SdbFile.Metrics.ContainsKey(id1) == false)
+            if (SdbFile.Metrics.ContainsKey(tagId) == false)
             {
-                SdbFile.Metrics.Add(id1, 0);
+                SdbFile.Metrics.Add(tagId, 0);
             }
 
-            SdbFile.Metrics[id1] += 1;
+            SdbFile.Metrics[tagId] += 1;
         }
     }
 }

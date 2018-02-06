@@ -15,7 +15,7 @@ namespace SDB
             TAG_TYPE_WORD = 0x3000,
             TAG_TYPE_DWORD = 0x4000,
             TAG_TYPE_QWORD = 0x5000,
-            TAG_TYPE_STRINGREF = 0x6000, //implicit: 4 bytes
+            TAG_TYPE_STRINGREF = 0x6000,
             TAG_TYPE_LIST = 0x7000,
             TAG_TYPE_STRING = 0x8000,
             TAG_TYPE_BINARY = 0x9000
@@ -68,7 +68,6 @@ namespace SDB
             TAG_PROBLEMSEVERITY = 0x4010,
             TAG_LANGID = 0x4011,
             TAG_VER_LANGUAGE = 0x4012,
-            TAG_UNKNOWN_7 = 0x4013,
             TAG_ENGINE = 0x4014,
             TAG_HTMLHELPID = 0x4015,
             TAG_INDEX_FLAGS = 0x4016,
@@ -214,7 +213,6 @@ namespace SDB
             TAG_MIGRATION_DATA_TEXT = 0x6032,
             TAG_APP_STORE_PRODUCT_ID = 0x6033,
             TAG_MORE_INFO_URL = 0x6034,
-            TAG_UNKNOWN_1 = 0x6036,
 
             TAG_DATABASE = 0x7001,
             TAG_LIBRARY = 0x7002,
@@ -276,9 +274,6 @@ namespace SDB
             TAG_CONTAINS_FILE = 0x703D,
             TAG_CONTAINS_HWID = 0x703E,
             TAG_DRIVER_PACKAGE_BLOCK = 0x703F,
-            TAG_UNKNOWN_2 = 0x7044,
-            TAG_UNKNOWN_5 = 0x7045,
-            TAG_UNKNOWN_6 = 0x7046,
 
             TAG_STRINGTABLE = 0x7801,
             TAG_INDEXES = 0x7802,
@@ -298,8 +293,6 @@ namespace SDB
             TAG_APP_ID = 0x9011,
             TAG_REG_VALUE_DATA_BINARY = 0x9012,
             TAG_TEXT = 0x9013,
-            TAG_UNKNOWN_3 = 0x900c,
-            TAG_UNKNOWN_4 = 0x900b,
 
             TAG_INDEX_BITS = 0x9801
         }
