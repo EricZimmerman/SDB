@@ -14,6 +14,10 @@ namespace SBD.Test
         {
             var files = Directory.GetFiles(@"D:\Code\SDB\SBD.Test\Test Files", "*.sdb");
 
+            var f = @"C:\Temp\sdb\CVE-2013-3893.sdb";
+
+            var ss1 = Sdb.LoadFile(f);
+
             foreach (var file in files)
             {
                 Debug.WriteLine($"File: {file}");

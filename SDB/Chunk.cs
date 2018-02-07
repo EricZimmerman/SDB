@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using NLog;
 using SDB.EntryTypes;
+using SDB.Other;
 
 namespace SDB
 {
@@ -151,9 +152,16 @@ namespace SDB
                         Buffer.BlockCopy(bytes, index, buff, 0, size);
 
                         var bin = new SdbEntryBinary(id1, buff, baseOffset + index - 4);
+                        
                         Children.Add(bin);
 
                         index += size;
+
+
+                        if (id1 == SdbFile.TagValue.TAG_PATCH_BITS)
+                        {
+                            var pb = new PatchBits(bin.Bytes);
+                        }
 
                         break;
                     default:

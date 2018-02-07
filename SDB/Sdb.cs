@@ -10,7 +10,7 @@ namespace SDB
         {
             var raw = File.ReadAllBytes(sdbFile);
 
-            var sigGood = "sdbf";
+            const string sigGood = "sdbf";
 
             var sig = Encoding.GetEncoding(1252).GetString(raw, 0x8, 4);
 
