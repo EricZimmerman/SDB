@@ -368,7 +368,7 @@ namespace SDB
 
         public List<ISdbEntry> Children { get; }
 
-        public static List<StringTableEntry> StringTableEntries { get; } = new List<StringTableEntry>();
+        public static Dictionary<int, StringTableEntry> StringTableEntries { get; } = new Dictionary<int, StringTableEntry>();
 
         public static Dictionary<TagValue, int> Metrics { get; } = new Dictionary<TagValue, int>();
 

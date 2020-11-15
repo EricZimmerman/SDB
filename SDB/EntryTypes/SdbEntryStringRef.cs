@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
 
 namespace SDB.EntryTypes
@@ -29,7 +28,7 @@ namespace SDB.EntryTypes
         private object GetValue()
         {
             var stringOffset = BitConverter.ToInt32(Bytes, 0);
-            return SdbFile.StringTableEntries.SingleOrDefault(t => t.Offset == stringOffset)?.Value;
+            return SdbFile.StringTableEntries[stringOffset].Value;
         }
 
         public override string ToString()

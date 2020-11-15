@@ -136,7 +136,7 @@ namespace SDB
 
                         //this provides a means to do easy string lookups based on relative offset
                         var sti = new StringTableEntry(index, Encoding.Unicode.GetString(buff, 0, size).Trim('\0'));
-                        SdbFile.StringTableEntries.Add(sti);
+                        SdbFile.StringTableEntries.Add(sti.Offset, sti);
 
                         //this is the structure itself that defines the strings found in the database
                         var st = new SdbEntryStringTableItem(id1, buff, baseOffset + index - 4);
