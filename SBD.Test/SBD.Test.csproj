@@ -3,6 +3,11 @@
     <TargetFrameworks>net461;net5.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Properties\**" />
+    <EmbeddedResource Remove="Properties\**" />
+    <None Remove="Properties\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="5.10.3" />
     <PackageReference Include="NUnit" Version="3.13.2" />
     <PackageReference Include="ServiceStack.Text" Version="5.11.0" />
@@ -22,8 +27,5 @@
     <None Include="Test Files\sysmainXP.sdb" />
     <None Include="Test Files\{a80125c3-2fd3-9b70-6126-665732c0fa7c}.sdb" />
     <None Include="Test Files\{e2899b82-b776-f85f-e800-4c3953792d3d}.sdb" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 </Project>
