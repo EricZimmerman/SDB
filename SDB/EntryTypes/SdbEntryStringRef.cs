@@ -2,38 +2,37 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace SDB.EntryTypes
+namespace SDB.EntryTypes;
+
+public class SdbEntryStringRef : ISdbEntry
 {
-    public class SdbEntryStringRef : ISdbEntry
+    public SdbEntryStringRef(SdbFile.TagValue typeId, byte[] bytes, int offset)
     {
-        public SdbEntryStringRef(SdbFile.TagValue typeId, byte[] bytes, int offset)
-        {
-            TypeId = typeId;
-            Bytes = bytes;
-            Offset = offset;
+        TypeId = typeId;
+        Bytes = bytes;
+        Offset = offset;
 
-            Children = new List<ISdbEntry>();
-        }
+        Children = new List<ISdbEntry>();
+    }
 
-        public List<ISdbEntry> Children { get; }
+    public List<ISdbEntry> Children { get; }
 
-        public SdbFile.TagValue TypeId { get; }
+    public SdbFile.TagValue TypeId { get; }
 
-        [IgnoreDataMember] public byte[] Bytes { get; }
+    [IgnoreDataMember] public byte[] Bytes { get; }
 
-        public object Value => GetValue();
+    public object Value => GetValue();
 
-        public int Offset { get; set; }
+    public int Offset { get; set; }
 
-        private object GetValue()
-        {
-            var stringOffset = BitConverter.ToInt32(Bytes, 0);
-            return SdbFile.StringTableEntries[stringOffset].Value;
-        }
+    private object GetValue()
+    {
+        var stringOffset = BitConverter.ToInt32(Bytes, 0);
+        return SdbFile.StringTableEntries[stringOffset].Value;
+    }
 
-        public override string ToString()
-        {
-            return $"Type: {TypeId} (0x{TypeId:X}) --> {Value} Children count: {Children.Count:N0}";
-        }
+    public override string ToString()
+    {
+        return $"Type: {TypeId} (0x{TypeId:X}) --> {Value} Children count: {Children.Count:N0}";
     }
 }

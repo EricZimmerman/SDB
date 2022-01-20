@@ -1,16 +1,15 @@
 ﻿using System.Collections.Generic;
 
-namespace SDB.EntryTypes
+namespace SDB.EntryTypes;
+
+public interface ISdbEntry
 {
-    public interface ISdbEntry
-    {
-        List<ISdbEntry> Children { get; }
+    List<ISdbEntry> Children { get; }
 
-        SdbFile.TagValue TypeId { get; }
-        byte[] Bytes { get; }
+    SdbFile.TagValue TypeId { get; }
+    byte[] Bytes { get; }
 
-        object Value { get; }
+    object Value { get; }
 
-        int Offset { get; set; }
-    }
+    int Offset { get; set; }
 }

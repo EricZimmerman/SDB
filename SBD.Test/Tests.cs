@@ -3,33 +3,33 @@ using System.IO;
 using NUnit.Framework;
 using SDB;
 
-namespace SBD.Test
+namespace SBD.Test;
+
+[TestFixture]
+public class Tests
 {
-    [TestFixture]
-    public class Tests
+    //TODO Finish this
+    [Test]
+    public void ParseTest()
     {
-        //TODO Finish this
-        [Test]
-        public void ParseTest()
+        var files = Directory.GetFiles(@"D:\Code\SDB\SBD.Test\Test Files", "*.sdb");
+
+        var f = @"C:\Temp\sdb\CVE-2013-3893.sdb";
+
+        var ss1 = Sdb.LoadFile(f);
+
+        foreach (var file in files)
         {
-            var files = Directory.GetFiles(@"D:\Code\SDB\SBD.Test\Test Files", "*.sdb");
+            Debug.WriteLine($"File: {file}");
+            var ss = Sdb.LoadFile(file);
 
-            var f = @"C:\Temp\sdb\CVE-2013-3893.sdb";
+            //    File.WriteAllText($@"C:\temp\sdb\{Path.GetFileName(file)}.json", ss.Children.ToJson());
 
-            var ss1 = Sdb.LoadFile(f);
-
-            foreach (var file in files)
+            Debug.WriteLine("METRICS");
+            foreach (var metricsKey in SdbFile.Metrics.Keys)
             {
-                Debug.WriteLine($"File: {file}");
-                var ss = Sdb.LoadFile(file);
-
-                //    File.WriteAllText($@"C:\temp\sdb\{Path.GetFileName(file)}.json", ss.Children.ToJson());
-
-                Debug.WriteLine("METRICS");
-                foreach (var metricsKey in SdbFile.Metrics.Keys)
-                {
-                    Debug.WriteLine($"{metricsKey} (0x{metricsKey:X}): {SdbFile.Metrics[metricsKey]}");
-                }
+                Debug.WriteLine($"{metricsKey} (0x{metricsKey:X}): {SdbFile.Metrics[metricsKey]}");
+            }
 
 //                foreach (var chunk in ss.Children)
 //                {
@@ -57,7 +57,6 @@ namespace SBD.Test
 //
 //                    //    File.WriteAllBytes(Path.Combine(@"C:\temp",fname),chunk.Bytes);
 //                }
-            }
         }
     }
 }
