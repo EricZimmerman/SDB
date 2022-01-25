@@ -12,7 +12,7 @@ namespace SDB
 
             const string sigGood = "sdbf";
 
-            var sig = Encoding.GetEncoding(1252).GetString(raw, 0x8, 4);
+            var sig = CodePagesEncodingProvider.Instance.GetEncoding(1252)!.GetString(raw, 0x8, 4);
 
             if (sig != sigGood)
             {

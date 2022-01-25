@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
-using NLog;
 using SDB.EntryTypes;
 using SDB.Other;
+using Serilog;
 
 namespace SDB
 {
@@ -15,9 +15,8 @@ namespace SDB
             TypeId = typeId;
             Bytes = bytes;
 
-            var logger = LogManager.GetCurrentClassLogger();
 
-            logger.Debug($"Chunk ID: {typeId} ({typeId:X}) bytes length: 0x{Bytes.Length:X}");
+            Log.Debug("Chunk ID: {TypeId} ({TypeId2:X}) bytes length: 0x{Length:X}",typeId,typeId,bytes.Length);
 
             var index = 0x0;
 
@@ -35,7 +34,7 @@ namespace SDB
 
                 var tagTypeInt = (int) id1 & 0xF000;
 
-                logger.Debug($"While loop TagType {tagTypeInt:X}, Id: {id1} (0x{id1:X})");
+                Log.Debug("While loop TagType {TagTypeInt:X}, Id: {Id1} (0x{Id1a:X})",tagTypeInt,id1,id1);
 
                 index += 2;
 
