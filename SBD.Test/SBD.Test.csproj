@@ -3,11 +3,7 @@
     <TargetFrameworks>net461;net6.0</TargetFrameworks>
     <LangVersion>10</LangVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Properties\**" />
-    <EmbeddedResource Remove="Properties\**" />
-    <None Remove="Properties\**" />
-  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="6.2.0" />
     <PackageReference Include="NUnit" Version="3.13.2" />
@@ -17,7 +13,6 @@
     <ProjectReference Include="..\SDB\SDB.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="Test Files\C--Windows-AppPatch-Custom-{6285a320-6cf0-b380-93f7-7504feaa793d}.sdb" />
     <None Include="Test Files\drvmain.sdb" />
     <None Include="Test Files\frxmain.sdb" />
