@@ -1,34 +1,33 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace SDB.EntryTypes
+namespace SDB.EntryTypes;
+
+public class SdbEntryList : ISdbEntry
 {
-    public class SdbEntryList : ISdbEntry
+    public SdbEntryList(SdbFile.TagValue typeId, byte[] bytes, int offset)
     {
-        public SdbEntryList(SdbFile.TagValue typeId, byte[] bytes, int offset)
-        {
-            TypeId = typeId;
-            Bytes = bytes;
+        TypeId = typeId;
+        Bytes = bytes;
 
-            Offset = offset;
+        Offset = offset;
 
-            Children = new List<ISdbEntry>();
-        }
+        Children = new List<ISdbEntry>();
+    }
 
 
-        public List<ISdbEntry> Children { get; }
+    public List<ISdbEntry> Children { get; }
 
-        public SdbFile.TagValue TypeId { get; }
+    public SdbFile.TagValue TypeId { get; }
 
-        [IgnoreDataMember] public byte[] Bytes { get; }
+    [IgnoreDataMember] public byte[] Bytes { get; }
 
-        public object Value => TypeId.ToString();
+    public object Value => TypeId.ToString();
 
-        public int Offset { get; set; }
+    public int Offset { get; set; }
 
-        public override string ToString()
-        {
-            return $"Type: {TypeId} (0x{TypeId:X}) Children count: {Children.Count:N0}";
-        }
+    public override string ToString()
+    {
+        return $"Type: {TypeId} (0x{TypeId:X}) Children count: {Children.Count:N0}";
     }
 }
