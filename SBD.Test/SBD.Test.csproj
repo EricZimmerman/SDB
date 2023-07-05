@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" Version="6.2.0" />
-    <PackageReference Include="NUnit" Version="3.13.2" />
-    <PackageReference Include="ServiceStack.Text" Version="5.13.2" />
+    <PackageReference Include="FluentAssertions" Version="6.11.0" />
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="ServiceStack.Text" Version="6.9.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SDB\SDB.csproj" />
