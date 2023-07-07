@@ -8,6 +8,7 @@
     <LangVersion>10</LangVersion>
     <Authors>Eric R. Zimmerman</Authors>
     <PackageProjectUrl>https://github.com/EricZimmerman/SDB</PackageProjectUrl>
+    <Description>Parses Windows SDB files</Description>
 
     <PackageTags>SDB</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
