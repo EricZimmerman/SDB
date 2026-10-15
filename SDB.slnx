@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+  </Configurations>
+  <Project Path="SDB.Test/SDB.Test.csproj" />
+  <Project Path="SDB/SDB.csproj" />
+</Solution>

@@ -297,8 +297,14 @@ public class SdbFile
         TAG_INDEX_BITS = 0x9801
     }
 
+    /// <exception cref="SdbParseException"><paramref name="rawBytes" /> is smaller than the 12 byte header</exception>
     public SdbFile(byte[] rawBytes, string sourceFile)
     {
+        if (rawBytes.Length < Sdb.HeaderSize)
+        {
+            throw new SdbParseException($"File is too small ({rawBytes.Length} bytes) to be an SDB file", 0, "header");
+        }
+
         RawBytes = rawBytes;
         SourceFile = Path.GetFullPath(sourceFile);
 
@@ -307,55 +313,39 @@ public class SdbFile
 
         Log.Debug("Major: {MajorVersion}, Minor: {MinorVersion}",MajorVersion,MinorVersion);
 
-        var index = 0xc;
+        //the file is a series of lists, each of them: tag, Int32 length, data ('length' bytes long)
+        var context = new Chunk.Context();
 
-        StringTableEntries.Clear();
-        Metrics.Clear();
+        Children = Chunk.Parse(rawBytes, Sdb.HeaderSize, rawBytes.Length, null, 0, context);
 
-        Children = new List<ISdbEntry>();
+        ParseErrors = context.ParseErrors;
+        Strings = context.Strings;
 
-        while (index < rawBytes.Length)
+        foreach (var stringRef in context.StringRefs)
         {
-            var id = (TagValue) BitConverter.ToUInt16(rawBytes, index);
-            index += 2;
-
-            var tagType = (int) id & 0xF000;
-
-            if (tagType == 0x7000)
+            if (Strings.ContainsKey(stringRef.StringOffset) == false)
             {
-                //lists look like:
-                //tag
-                //length
-                //data ('length' bytes long)
-
-                var size = BitConverter.ToInt32(rawBytes, index);
-                index += 4;
-                var buff = new byte[size];
-                Buffer.BlockCopy(rawBytes, index, buff, 0, size);
-
-                var c = new Chunk(id, buff, index - 2 - 4);
-
-                var l = new SdbEntryList(id, buff, index - 2 - 4);
-
-                foreach (var sdbEntry in c.Children)
-                {
-                    if (!(sdbEntry is SdbEntryList))
-                    {
-                        sdbEntry.Offset += 4;
-                    }
-
-                    l.Children.Add(sdbEntry);
-                }
-
-                Children.Add(l);
-
-                index += size;
+                ParseErrors.Add(
+                    $"{stringRef.TypeId} at 0x{stringRef.Offset:X} refers to string table offset 0x{stringRef.StringOffset:X}, which has no string");
             }
-            else
-            {
-                throw new Exception(
-                    $"Unexpected Tag type '0x{tagType:X4}'! Please send this sdb file to saericzimmerman@gmail.com so suppoprt can be added!");
-            }
+        }
+
+        //the static collections describe the last file loaded, as before
+        StringTableEntries.Clear();
+        foreach (var entry in Strings)
+        {
+            StringTableEntries.Add(entry.Key, entry.Value);
+        }
+
+        Metrics.Clear();
+        foreach (var metric in context.Metrics)
+        {
+            Metrics.Add(metric.Key, metric.Value);
+        }
+
+        foreach (var error in ParseErrors)
+        {
+            Log.Debug("{SourceFile}: {Error}", SourceFile, error);
         }
     }
     //https://github.com/evil-e/sdb-explorer/blob/master/sdb.h
@@ -366,8 +356,22 @@ public class SdbFile
 
     public List<ISdbEntry> Children { get; }
 
+    /// <summary>
+    ///     Problems found while parsing: bad sizes, unsupported tag types, string references with no string. Parsing
+    ///     keeps everything before the problem in each list.
+    /// </summary>
+    public List<string> ParseErrors { get; }
+
+    /// <summary>True when <see cref="ParseErrors" /> is not empty</summary>
+    public bool ParsingError => ParseErrors.Count > 0;
+
+    /// <summary>This file's TAG_STRINGTABLE items, keyed by their offset from the TAG_STRINGTABLE tag</summary>
+    public Dictionary<int, StringTableEntry> Strings { get; }
+
+    /// <summary>The string table of the last file loaded. Use <see cref="Strings" /> for a particular file</summary>
     public static Dictionary<int, StringTableEntry> StringTableEntries { get; } = new Dictionary<int, StringTableEntry>();
 
+    /// <summary>How many times each tag occurs in the last file loaded (tags inside the top level lists)</summary>
     public static Dictionary<TagValue, int> Metrics { get; } = new Dictionary<TagValue, int>();
 
     public string SourceFile { get; }

@@ -10,4 +10,9 @@ public class StringTableEntry
 
     public int Offset { get; }
     public string Value { get; }
+
+    public override string ToString()
+    {
+        return Value;
+    }
 }

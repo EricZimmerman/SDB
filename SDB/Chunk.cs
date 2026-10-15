@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using System.Text;
 using SDB.EntryTypes;
 using SDB.Other;
@@ -8,181 +7,226 @@ using Serilog;
 
 namespace SDB;
 
-internal class Chunk
+/// <summary>
+///     Parses the tags in one list (or the top level of the file). Every tag is a UInt16 whose high nibble is the
+///     type: NULL (no data), WORD/DWORD/QWORD (2/4/8 bytes), STRINGREF (4 byte offset into TAG_STRINGTABLE), or
+///     LIST/STRING/BINARY (Int32 size, then that many bytes).
+/// </summary>
+internal static class Chunk
 {
-    internal Chunk(SdbFile.TagValue typeId, byte[] bytes, int baseOffset)
+    /// <summary>Real files nest about 6 deep; this keeps hostile input from overflowing the stack</summary>
+    internal const int MaxDepth = 32;
+
+    internal sealed class Context
     {
-        TypeId = typeId;
-        Bytes = bytes;
+        public List<string> ParseErrors { get; } = new();
 
+        /// <summary>TAG_STRINGTABLE items, keyed by their offset from the TAG_STRINGTABLE tag</summary>
+        public Dictionary<int, StringTableEntry> Strings { get; } = new();
 
-        Log.Debug("Chunk ID: {TypeId} Bytes length: 0x{Bytes.Length:X}",typeId,Bytes.Length);
+        public Dictionary<SdbFile.TagValue, int> Metrics { get; } = new();
 
-        var index = 0x0;
+        public List<SdbEntryStringRef> StringRefs { get; } = new();
+    }
 
-        Children = new List<ISdbEntry>();
+    /// <summary>
+    ///     Parses the tags in <paramref name="data" />[<paramref name="start" />..<paramref name="end" />).
+    ///     <paramref name="parent" /> is the list being parsed, or null for the top level of the file (only lists
+    ///     allowed there); <paramref name="depth" /> is its nesting level. Problems go to <paramref name="context" />.
+    /// </summary>
+    internal static List<ISdbEntry> Parse(byte[] data, int start, int end, SdbFile.TagValue? parent, int depth,
+        Context context)
+    {
+        var children = new List<ISdbEntry>();
 
-        //bytes contains whatever the payload for this chunk is
-        while (index < bytes.Length)
+        var index = start;
+
+        while (index < end)
         {
-            if (bytes.Length - index < 2)
+            if (end - index < 2)
             {
+                if (parent != null)
+                {
+                    // seen in real files at the end of a list; not worth reporting
+                    break;
+                }
+
+                context.ParseErrors.Add($"{end - index} trailing byte(s) at 0x{index:X}");
                 break;
             }
 
-            var id1 = (SdbFile.TagValue) BitConverter.ToUInt16(bytes, index);
+            var tagOffset = index;
+            var id = (SdbFile.TagValue)BitConverter.ToUInt16(data, index);
+            var tagType = (SdbFile.TagType)((int)id & 0xF000);
 
-            var tagTypeInt = (int) id1 & 0xF000;
-
-            Log.Debug("While loop TagType 0x{TagTypeInt:X}, Id: {Id1}",tagTypeInt,id1);
+            Log.Debug("Tag {Id} (type {TagType}) at 0x{Offset:X}", id, tagType, tagOffset);
 
             index += 2;
 
-            //handle some special cases
-            switch ((int) id1)
+            if (parent == null && tagType != SdbFile.TagType.TAG_TYPE_LIST)
             {
-                case 0x53db:
-                    index -= 1;
-                    continue;
+                context.ParseErrors.Add(
+                    $"Unexpected tag type 0x{(int)tagType:X4} (tag 0x{(int)id:X4}) at 0x{tagOffset:X}; only lists are expected at the top level. Please send this sdb file to saericzimmerman@gmail.com so support can be added");
+                break;
             }
-            //end handle some special cases
 
-            int size;
-            byte[] buff;
+            // a special case seen in real files: skip one byte and carry on
+            if ((int)id == 0x53db)
+            {
+                index -= 1;
+                continue;
+            }
 
-            var tagType = (SdbFile.TagType) tagTypeInt;
-
-            UpdateMetrics(id1);
+            if (parent != null)
+            {
+                context.Metrics[id] = context.Metrics.TryGetValue(id, out var count) ? count + 1 : 1;
+            }
 
             switch (tagType)
             {
                 case SdbFile.TagType.TAG_TYPE_NULL:
-                    buff = new byte[0];
+                    children.Add(new SdbEntryNull(id, Array.Empty<byte>(), tagOffset));
+                    continue;
 
-                    var n = new SdbEntryNull(id1, buff, baseOffset + index);
-                    Children.Add(n);
-
-                    break;
-                case SdbFile.TagType.TAG_TYPE_BYTE:
-                    throw new Exception("Send this file to saericzimmerman@gmail.com so BYTE support can be added");
-//                        buff = new byte[1];
-//                        Buffer.BlockCopy(bytes, index, buff, 0, 1);
-//                        var b = new SdbEntryByte(id1, buff, baseOffset + index);
-//
-//                        Children.Add(b);
-//                        break;
                 case SdbFile.TagType.TAG_TYPE_WORD:
-                    buff = new byte[2];
-                    Buffer.BlockCopy(bytes, index, buff, 0, 2);
-                    var w = new SdbEntryWord(id1, buff, baseOffset + index);
-                    Children.Add(w);
-
-                    index += 2;
-                    break;
                 case SdbFile.TagType.TAG_TYPE_DWORD:
-                    buff = new byte[4];
-                    Buffer.BlockCopy(bytes, index, buff, 0, 4);
-                    var d = new SdbEntryDWord(id1, buff, baseOffset + index);
-                    Children.Add(d);
-
-                    index += 4;
-                    break;
                 case SdbFile.TagType.TAG_TYPE_QWORD:
-                    buff = new byte[8];
-                    Buffer.BlockCopy(bytes, index, buff, 0, 8);
-                    var q = new SdbEntryQWord(id1, buff, baseOffset + index);
-                    Children.Add(q);
-
-                    index += 8;
-                    break;
                 case SdbFile.TagType.TAG_TYPE_STRINGREF:
-                    buff = new byte[4];
-                    Buffer.BlockCopy(bytes, index, buff, 0, 4);
-                    var sr = new SdbEntryStringRef(id1, buff, baseOffset + index);
-                    Children.Add(sr);
+                {
+                    var length = tagType switch
+                    {
+                        SdbFile.TagType.TAG_TYPE_WORD => 2,
+                        SdbFile.TagType.TAG_TYPE_QWORD => 8,
+                        _ => 4
+                    };
 
-                    index += 4;
-                    break;
+                    if (end - index < length)
+                    {
+                        context.ParseErrors.Add(
+                            $"Tag {id} at 0x{tagOffset:X} needs {length} bytes of data, only {end - index} left");
+                        return children;
+                    }
+
+                    var buff = new byte[length];
+                    Buffer.BlockCopy(data, index, buff, 0, length);
+                    index += length;
+
+                    switch (tagType)
+                    {
+                        case SdbFile.TagType.TAG_TYPE_WORD:
+                            children.Add(new SdbEntryWord(id, buff, tagOffset));
+                            break;
+                        case SdbFile.TagType.TAG_TYPE_DWORD:
+                            children.Add(new SdbEntryDWord(id, buff, tagOffset));
+                            break;
+                        case SdbFile.TagType.TAG_TYPE_QWORD:
+                            children.Add(new SdbEntryQWord(id, buff, tagOffset));
+                            break;
+                        default:
+                            var sr = new SdbEntryStringRef(id, buff, tagOffset, context.Strings);
+                            context.StringRefs.Add(sr);
+                            children.Add(sr);
+                            break;
+                    }
+
+                    continue;
+                }
+
                 case SdbFile.TagType.TAG_TYPE_LIST:
-                    size = BitConverter.ToInt32(bytes, index);
-                    index += 4;
-                    buff = new byte[size];
-                    Buffer.BlockCopy(bytes, index, buff, 0, size);
-
-                    var c = new Chunk(id1, buff, baseOffset + index);
-
-                    var l = new SdbEntryList(id1, buff, baseOffset + index);
-
-                    foreach (var sdbEntry in c.Children)
-                    {
-                        if (!(sdbEntry is SdbEntryList))
-                        {
-                            sdbEntry.Offset += 4;
-                        }
-
-                        l.Children.Add(sdbEntry);
-                    }
-
-                    Children.Add(l);
-
-                    index += size;
-
-                    break;
                 case SdbFile.TagType.TAG_TYPE_STRING:
-                    size = BitConverter.ToInt32(bytes, index);
-                    index += 4;
-                    buff = new byte[size];
-                    Buffer.BlockCopy(bytes, index, buff, 0, size);
-
-                    //this provides a means to do easy string lookups based on relative offset
-                    var sti = new StringTableEntry(index, Encoding.Unicode.GetString(buff, 0, size).Trim('\0'));
-                    SdbFile.StringTableEntries.Add(sti.Offset, sti);
-
-                    //this is the structure itself that defines the strings found in the database
-                    var st = new SdbEntryStringTableItem(id1, buff, baseOffset + index - 4);
-                    Children.Add(st);
-
-                    index += size;
-                    break;
                 case SdbFile.TagType.TAG_TYPE_BINARY:
-                    size = BitConverter.ToInt32(bytes, index);
-                    index += 4;
-                    buff = new byte[size];
-                    Buffer.BlockCopy(bytes, index, buff, 0, size);
-
-                    var bin = new SdbEntryBinary(id1, buff, baseOffset + index - 4);
-                        
-                    Children.Add(bin);
-
-                    index += size;
-
-
-                    if (id1 == SdbFile.TagValue.TAG_PATCH_BITS)
+                {
+                    if (end - index < 4)
                     {
-                        var pb = new PatchBits(bin.Bytes);
+                        context.ParseErrors.Add($"Tag {id} at 0x{tagOffset:X} has no size");
+                        return children;
                     }
 
-                    break;
+                    var size = BitConverter.ToInt32(data, index);
+                    index += 4;
+
+                    if (size < 0)
+                    {
+                        context.ParseErrors.Add($"Tag {id} at 0x{tagOffset:X} has a negative size ({size})");
+                        return children;
+                    }
+
+                    var truncated = size > end - index;
+                    if (truncated)
+                    {
+                        context.ParseErrors.Add(
+                            $"Tag {id} at 0x{tagOffset:X} has size 0x{size:X} but only 0x{end - index:X} bytes are left; using those");
+                        size = end - index;
+                    }
+
+                    var buff = new byte[size];
+                    Buffer.BlockCopy(data, index, buff, 0, size);
+
+                    switch (tagType)
+                    {
+                        case SdbFile.TagType.TAG_TYPE_LIST:
+                        {
+                            var list = new SdbEntryList(id, buff, tagOffset);
+
+                            if (depth + 1 > MaxDepth)
+                            {
+                                context.ParseErrors.Add(
+                                    $"List {id} at 0x{tagOffset:X} is nested more than {MaxDepth} deep; its contents are skipped");
+                            }
+                            else
+                            {
+                                list.Children.AddRange(Parse(data, index, index + size, id, depth + 1, context));
+                            }
+
+                            children.Add(list);
+                            break;
+                        }
+                        case SdbFile.TagType.TAG_TYPE_STRING:
+                            // TAG_TYPE_STRINGREF values are offsets from the TAG_STRINGTABLE tag, which is 6 bytes before
+                            // the list's data; that is the same as this item's data offset from the start of the data
+                            if (parent == SdbFile.TagValue.TAG_STRINGTABLE)
+                            {
+                                var key = index - start;
+                                context.Strings[key] = new StringTableEntry(key,
+                                    Encoding.Unicode.GetString(buff, 0, size - size % 2).Trim('\0'));
+                            }
+
+                            children.Add(new SdbEntryStringTableItem(id, buff, tagOffset));
+                            break;
+                        default:
+                            var bin = new SdbEntryBinary(id, buff, tagOffset);
+
+                            if (id == SdbFile.TagValue.TAG_PATCH_BITS)
+                            {
+                                bin.PatchBits = new PatchBits(buff);
+                                foreach (var error in bin.PatchBits.ParseErrors)
+                                {
+                                    context.ParseErrors.Add($"{error} (TAG_PATCH_BITS at 0x{tagOffset:X})");
+                                }
+                            }
+
+                            children.Add(bin);
+                            break;
+                    }
+
+                    index += size;
+
+                    if (truncated)
+                    {
+                        return children;
+                    }
+
+                    continue;
+                }
+
                 default:
-                    throw new Exception($"Unknown tag type: {tagType}, index: 0x{index:X}");
+                    // TAG_TYPE_BYTE has no known tags; the rest are not defined
+                    context.ParseErrors.Add(
+                        $"Unsupported tag type 0x{(int)tagType:X4} (tag 0x{(int)id:X4}) at 0x{tagOffset:X}; the rest of {(parent == null ? "the file" : parent.ToString())} is skipped. Please send this sdb file to saericzimmerman@gmail.com so support can be added");
+                    return children;
             }
         }
-    }
 
-
-    public List<ISdbEntry> Children { get; }
-
-    public SdbFile.TagValue TypeId { get; }
-
-    [IgnoreDataMember] public byte[] Bytes { get; }
-
-    private static void UpdateMetrics(SdbFile.TagValue tagId)
-    {
-        if (SdbFile.Metrics.ContainsKey(tagId) == false)
-        {
-            SdbFile.Metrics.Add(tagId, 0);
-        }
-
-        SdbFile.Metrics[tagId] += 1;
+        return children;
     }
 }

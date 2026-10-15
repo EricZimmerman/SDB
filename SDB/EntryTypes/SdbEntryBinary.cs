@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using SDB.Other;
 
 namespace SDB.EntryTypes;
 
@@ -24,6 +25,9 @@ public class SdbEntryBinary : ISdbEntry
     public object Value => GetValue();
 
     public int Offset { get; set; }
+
+    /// <summary>The parsed entries for TAG_PATCH_BITS, otherwise null</summary>
+    public PatchBits PatchBits { get; internal set; }
 
     private object GetValue()
     {
