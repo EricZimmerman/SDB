@@ -36,10 +36,16 @@ public class CorpusTests
         var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
         for (var i = 0; i < 6 && dir != null; i++, dir = dir.Parent)
         {
-            var candidate = Path.Combine(dir.FullName, "SDB samples");
-            if (Directory.Exists(candidate))
+            foreach (var candidate in new[]
+                     {
+                         Path.Combine(dir.FullName, "Corpus", "SDB samples"),
+                         Path.Combine(dir.FullName, "SDB samples")
+                     })
             {
-                return candidate;
+                if (Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
             }
         }
 

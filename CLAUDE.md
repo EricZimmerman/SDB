@@ -34,7 +34,7 @@ dotnet pack --configuration Release
 
 - `ParserTests`: files built with `SdbBuilder` (writes tags and records their offsets), checking every value and offset, the string table, patch bits, `LoadFile` errors, two files keeping their own strings, metrics. Non-parallelizable, because of the static collections.
 - `RobustnessTests`: truncation at every length, bad sizes, unsupported types, 200,000 nested lists, bad patch bit sizes (with a deadline), missing strings, random corruption. Add regression tests here.
-- `CorpusTests`: every `.sdb` in a local collection that is not in the repo: the `SDB samples` folder next to the repository, or `SDB_CORPUS`. Skipped when it is missing (as in CI). It expects no `ParseErrors`, and exact entry counts (from an independent walker) for the three evil-e/sdb-explorer samples. Don't copy its files into the repo (Microsoft's shim databases).
+- `CorpusTests`: every `.sdb` in a local collection that is not in the repo: the `SDB samples` folder in `Corpus/` next to the repository (or directly next to it), or `SDB_CORPUS`. Skipped when it is missing (as in CI). It expects no `ParseErrors`, and exact entry counts (from an independent walker) for the three evil-e/sdb-explorer samples. Don't copy its files into the repo (Microsoft's shim databases).
 
 ## Versioning and release
 
